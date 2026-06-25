@@ -1,191 +1,133 @@
-[Grailed Scraper](https://apify.com/generativa/grailed-scraper?fpr=data)
+[Grailed Scraper](https://apify.com/lulzasaur/grailed-scraper?fpr=data)
 
-Extract listings from [Grailed.com](https://www.grailed.com) - the leading marketplace for streetwear, designer fashion, and vintage clothing.
+# Grailed Scraper
+
+Apify Actor for scraping Grailed.com designer fashion marketplace listings. Uses the Grailed Algolia search API for fast, reliable data extraction without browser rendering.
 
 ## Features
 
-- **Fast & Efficient** - Direct API integration, no browser required
-- **Designer Filtering** - Focus on specific brands (Supreme, Palace, Bape, Off-White, etc.)
-- **Size & Condition Filters** - Target specific inventory
-- **Price Range** - Filter by min/max price
-- **Seller Information** - Get seller ratings, transaction count, trusted status
-- **Price History** - Track price drops on listings
-- **Shipping Info** - Full shipping rates by region
+- Search Grailed listings by keyword (designer names, item types, styles)
+- Filter by price range, department (menswear/womenswear), and condition
+- Two modes: quick search results or full detail scraping via listing API
+- Extracts designer names, prices, sizes, conditions, photos, and seller info
+- Paginates through Algolia API results (up to 1000 listings per query)
+- Detail mode fetches complete listing data including full descriptions and all photos
 
-## Use Cases
+## Input
 
-### Resellers & Flippers
-
-- Research market prices before buying
-- Find underpriced listings
-- Monitor specific designers for deals
-
-### Brand Monitoring
-
-- Track where products are being resold
-- Monitor pricing trends
-- Analyze market positioning
-
-### Market Research
-
-- Analyze streetwear market trends
-- Compare prices across designers
-- Study resale market dynamics
-
-### Data Analysis
-
-- Build pricing models
-- Create price guides
-- Track inventory levels
-
-## Input Example
-
-```
-{
-  "designers": ["Supreme"],
-  "categories": ["tops"],
-  "sizes": ["L", "XL"],
-  "priceMin": 50,
-  "priceMax": 500,
-  "condition": "is_gently_used",
-  "maxItems": 100
-}
-```
-
-## Output Data
-
-Each listing includes comprehensive data:
-
-```
-{
-  "id": "91346183",
-  "url": "https://www.grailed.com/listings/91346183",
-  "title": "Supreme red rum baseball jersey",
-  "designer": "Supreme",
-  "designers": ["Supreme"],
-  "category": "tops",
-  "categoryPath": "tops.jerseys",
-  "department": "menswear",
-  "size": "l",
-  "price": 68,
-  "priceDrops": [95, 85, 76, 68],
-  "currency": "USD",
-  "condition": "is_gently_used",
-  "color": "green",
-  "location": "United States",
-  "images": ["https://media-assets.grailed.com/..."],
-  "photoCount": 7,
-  "seller": {
-    "id": "832674",
-    "username": "Tlam",
-    "ratingAverage": 4.95,
-    "ratingCount": 607,
-    "totalBoughtAndSold": 1274,
-    "trustedSeller": true,
-    "avatarUrl": "https://..."
-  },
-  "shipping": {
-    "us": { "amount": 9, "enabled": true },
-    "ca": { "amount": 0, "enabled": false },
-    "uk": { "amount": 0, "enabled": false }
-  },
-  "buyNow": true,
-  "makeOffer": true,
-  "isSold": false,
-  "soldPrice": null,
-  "soldAt": null,
-  "createdAt": "2026-01-23T03:56:12.810Z",
-  "updatedAt": "2026-01-27T03:02:23.124Z",
-  "scrapedAt": "2026-01-27T03:14:57.847Z"
-}
-```
-
-## Input Parameters
-
-| Parameter | Type | Default | Description |
+| Field | Type | Default | Description |
 | --- | --- | --- | --- |
-| `searchQuery` | String | - | Search term (e.g., "box logo hoodie") |
-| `designers` | Array | - | Filter by designer/brand names |
-| `categories` | Array | - | Filter by category (tops, bottoms, footwear, etc.) |
-| `sizes` | Array | - | Filter by size (S, M, L, XL, 9, 10, etc.) |
-| `priceMin` | Integer | - | Minimum price in USD |
-| `priceMax` | Integer | - | Maximum price in USD |
-| `condition` | String | - | Filter by condition |
-| `maxItems` | Integer | 1000 | Maximum items to scrape |
-| `proxyConfiguration` | Object | Apify Proxy | Proxy settings |
-| `debugLog` | Boolean | false | Enable verbose logging |
+| `searchQueries` | string[] | `["jordan 1"]` | Search terms to scrape |
+| `maxListings` | integer | `100` | Max listings per query (0 = max available, up to 1000) |
+| `scrapeDetails` | boolean | `false` | Fetch full details from listing API |
+| `minPrice` | integer | - | Minimum price filter |
+| `maxPrice` | integer | - | Maximum price filter |
+| `department` | string | `""` | `menswear`, `womenswear`, or empty for all |
+| `condition` | string | `""` | `is_new`, `is_gently_used`, `is_used`, `is_very_worn`, or empty for all |
+| `proxyConfiguration` | object | `{}` | Proxy settings (optional) |
 
-### Condition Values
-
-- `is_new` - New/Never Worn
-- `is_gently_used` - Gently Used
-- `is_used` - Used
-- `is_very_worn` - Very Worn
-- `is_not_specified` - Not Specified
-
-## Proxy Configuration
-
-For best results, use Apify Proxy:
+### Example Input
 
 ```
 {
-  "proxyConfiguration": {
-    "useApifyProxy": true
-  }
+    "searchQueries": ["rick owens ramones", "supreme box logo"],
+    "maxListings": 50,
+    "scrapeDetails": true,
+    "minPrice": 100,
+    "maxPrice": 500,
+    "department": "menswear"
 }
 ```
 
-## Pricing
+## Output
 
-This actor uses **pay-per-result** pricing - you only pay for what you scrape:
+### Search-only mode (`scrapeDetails: false`)
 
-| Cost Component | Price |
-| --- | --- |
-| Per listing scraped | $0.005 |
-| Minimum per run | $0.01 |
+```
+{
+    "listingId": 12345678,
+    "title": "Rick Owens Ramones Low",
+    "price": 350,
+    "designer": "Rick Owens",
+    "designerNames": ["Rick Owens"],
+    "department": "menswear",
+    "category": "footwear",
+    "subcategory": "low-top-sneakers",
+    "size": "43",
+    "condition": "Gently Used",
+    "imageUrl": "https://process.fs.grailed.com/...",
+    "sold": false,
+    "sellerUsername": "fashionseller",
+    "url": "https://www.grailed.com/listings/12345678",
+    "searchQuery": "rick owens ramones",
+    "scrapedAt": "2026-03-17T12:00:00.000Z"
+}
+```
 
-### Cost Examples
+### Detail mode (`scrapeDetails: true`)
 
-| Volume | Cost |
-| --- | --- |
-| 100 listings | $0.51 |
-| 500 listings | $2.51 |
-| 1,000 listings | $5.01 |
-| 3,000 listings | $15.01 |
+Includes all search fields plus:
 
-**3-day free trial** included for new users.
+```
+{
+    "description": "Rick Owens Ramones low-top sneakers in black...",
+    "photos": [
+        "https://process.fs.grailed.com/photo1.jpg",
+        "https://process.fs.grailed.com/photo2.jpg"
+    ],
+    "photoCount": 5,
+    "sellerLocation": "New York, NY",
+    "sellerRating": 4.9,
+    "sellerListingCount": 42,
+    "createdAt": "2026-03-10T08:30:00.000Z",
+    "updatedAt": "2026-03-15T14:20:00.000Z"
+}
+```
 
-## Performance
+## How It Works
 
-This actor uses direct API integration (no browser) for fast, efficient scraping:
+1. Queries the Grailed Algolia search API directly (no browser needed)
+2. Builds Algolia POST requests with search terms, numeric filters, and facet filters
+3. Paginates through results (100 per page, up to 10 pages = 1000 max per query)
+4. Optionally fetches individual listing detail API for richer data
+5. Uses CheerioCrawler for detail page requests (handles retries, proxies, concurrency)
 
-- ~40 listings per API call
-- Low memory usage (~128-256MB)
-- Fast execution (1000 items in ~30 seconds)
+## Technical Details
 
-## Tips
+Grailed uses Algolia for its search infrastructure with publicly accessible API keys. This scraper calls the Algolia API directly for search, which is significantly faster and more reliable than scraping HTML. For detail pages, it uses the Grailed listing API endpoint.
 
-1. **Start small** - Test with `maxItems: 50` before large runs
-2. **Filter by designer** - More focused and efficient than broad searches
-3. **Use price filters** - Narrow down to relevant price ranges
-4. **Check priceDrops** - Identify items with recent price reductions
+## Quick Start
 
-## Limitations
+```
+$apify run --purge
+```
 
-- **Active listings only** - Sold items require authentication and are not available via public API
-- **Public data only** - No login required or supported
-- **Rate-limited** - Respects Grailed's servers with built-in delays
+## Deploy to Apify
 
-## Legal Disclaimer
+```
+apify login
+apify push
+```
 
-This actor extracts publicly available data from Grailed.com. Users are responsible for ensuring their use complies with:
+## Related Scrapers
 
-- Grailed's Terms of Service
-- Applicable laws and regulations
-- Data protection requirements
+More marketplace scrapers and data tools by [lulzasaur](https://apify.com/lulzasaur):
 
-Use for legitimate purposes such as market research, price comparison, and personal use. Do not use for harassment, spam, or unauthorized commercial purposes.
-
-## Support
-
-For issues or feature requests, please open an issue on the actor's page.
+- [AbeBooks Scraper](https://apify.com/lulzasaur/abebooks-scraper) — Rare and used books
+- [Bonanza Scraper](https://apify.com/lulzasaur/bonanza-scraper) — Online marketplace listings
+- [Contractor License Verifier](https://apify.com/lulzasaur/contractor-license-scraper) — Multi-state license verification
+- [Craigslist Scraper](https://apify.com/lulzasaur/craigslist-scraper) — Classifieds and for-sale posts
+- [Goodreads Scraper](https://apify.com/lulzasaur/goodreads-scraper) — Book ratings and reviews
+- [Houzz Scraper](https://apify.com/lulzasaur/houzz-scraper) — Home improvement professionals
+- [IMDb Scraper](https://apify.com/lulzasaur/imdb-scraper) — Movie and TV show data
+- [Nurse License Verifier](https://apify.com/lulzasaur/nurse-license-scraper) — State nursing board verification
+- [OfferUp Scraper](https://apify.com/lulzasaur/offerup-scraper) — Local marketplace listings
+- [Poshmark Scraper](https://apify.com/lulzasaur/poshmark-scraper) — Fashion resale marketplace
+- [PSA Population Report](https://apify.com/lulzasaur/psa-pop-scraper) — Card grading data
+- [Redfin Scraper](https://apify.com/lulzasaur/redfin-scraper) — Real estate listings and prices
+- [Reverb Scraper](https://apify.com/lulzasaur/reverb-scraper) — Music gear marketplace
+- [StubHub Scraper](https://apify.com/lulzasaur/stubhub-scraper) — Event ticket prices
+- [Swappa Scraper](https://apify.com/lulzasaur/swappa-scraper) — Used electronics marketplace
+- [TCGPlayer Scraper](https://apify.com/lulzasaur/tcgplayer-scraper) — Trading card prices
+- [ThriftBooks Scraper](https://apify.com/lulzasaur/thriftbooks-scraper) — Used book prices
+- [Thumbtack Scraper](https://apify.com/lulzasaur/thumbtack-scraper) — Local service professionals
